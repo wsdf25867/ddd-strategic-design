@@ -190,3 +190,83 @@ docker compose -p kitchenpos up -d
 | 주문 완료 | Completed    | 주문이 제공된 이후의 상태                 |
 
 ## 모델링
+
+### 상품
+
+- `Product`는 `Name`을 갖는다.
+- `Product`는 `Price`를 갖는다.
+- `Product` 등록 정책
+- `Name`에 비속어를 사용할 수 없다.
+- `Price`는 0원 이상이어야 한다.
+- `Product` 변경 정책
+- `Price`는 0원 이상이어야 한다.
+- `Price` 변경시 가격이 `Menu`의 가격이 `Menu`에 속한 `Product Price` 의 합보다 크면 `Menu`가 숨겨진다.
+
+### 메뉴 그룹
+
+- `MenuGroup` 은 `Name`을 갖는다.
+- `MenuGroup` 등록 정책
+- `Name` 은 비울 수 없다.
+
+### 메뉴
+
+- `Menu` 는 `Product`를 갖는다.
+- `Menu` 는 `Name`를 갖는다.
+- `Menu` 는 `MenuGroup` 을 갖는다.
+- `Menu` 는 `Price`를 변경할 수 있다.
+- `Menu` 는 노출할 수 있다.
+- `Menu` 는 비노출 할 수 있다.
+- `Product` 는 1개 이상이어야 한다.
+- `Product` 의 수량은 0 이상이어야 한다.
+- `Menu` 의 가격은 0원 이상이어야 한다.
+- `Name` 에 비속어를 사용할 수 없다.
+
+### 주문 테이블
+
+- `OrderTable` 은 `Name`을 갖는다.
+- `OrderTable` 은 `Number Of Guests` 의 수를 변경할 수 있고, 0 이상이어야 한다.
+- `OrderTable` 은 손님이 앉으면 찬 테이블이 된다.
+- `OrderTable` 은 주문이 모두 완료되고 손님이 없으면 빈 테이블이 된다.
+- `OrderTable` 에 완료되지 않은 테이블이 있다면 빈 테이블이 될 수 없다.
+
+### 주문
+
+- `Order` 은 `Delivery,TOGO,Eat In` 3가지 유형을 가진다.
+- `Order` 는 0개 이상의 `Menu`를 갖는다.
+- 주문한 `Menu`의 가격과 실제 `Menu`의 가격은 같아야 한다.
+- `Order`는 접수될 수 있다.
+- `Order`는 서빙될 수 있다.
+- `Order`는 완료될 수 있다.
+
+### 배달 주문
+
+- `Delivery Order` 는 `Delivery Address`를 갖는다.
+- 주문이 접수되면 `Delivery Agency`에 배달을 요청한다.
+- 제공된 주문만 배달할 수 있다.
+- 배달이 완료되면 `Order`는 완료된다.
+
+```mermaid
+flowchart LR
+    deliveryOrder[배달 주문] --> waiting[접수 대기 중] --> accepted[접수] --> served[제공] --> delivering[배달중] --> delivered[배달 완료] --> completed[주문 완료]
+```
+
+### 포장 주문
+
+- 제공된 주문만 완료할 수 있다.
+
+```mermaid
+flowchart LR
+    deliveryOrder[포장 주문] --> waiting[접수 대기 중] --> accepted[접수] --> served[제공] --> completed[주문 완료]
+```
+
+
+
+### 매장 주문
+
+- 제공된 주문만 완료할 수 있다.
+- 모든 주문이 완료되면 테이블을 빈테이블로 만든다.
+
+```mermaid
+flowchart LR
+    eatInOrder[매장 주문] --> waiting[접수 대기 중] --> accepted[접수] --> served[제공] --> completed[주문 완료]
+```
