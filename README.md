@@ -98,11 +98,12 @@ docker compose -p kitchenpos up -d
 
 ### 기타
 
-| 한글명 | 영문명              | 설명                        |
-|-----|------------------|---------------------------|
-| 사장님 | Restaurant Owner | 상품을 파는 사람이다.              |
-| 손님  | Guest            | 상품을 사는 사람이다.              |
-| 매장  | Store            | 키친포스가 설치되고 음식을 사고파는 장소이다. |
+| 한글명        | 영문명              | 설명                                       |
+|------------|------------------|------------------------------------------|
+| 사장님        | Restaurant Owner | 상품을 파는 사람이다.                             |
+| 손님         | Guest            | 상품을 사는 사람이다.                             |
+| 매장         | Store            | 키친포스가 설치되고 음식을 사고파는 장소이다.                |
+| 비속어 검사 시스템 | Profanity Client | Profanity Client 를 통해서 비속어 여부를 판단할 수 있다. |
 
 ### 상품
 
@@ -174,6 +175,7 @@ docker compose -p kitchenpos up -d
 | 배달 완료  | Delivered        | 배달이 완료된 상태이다.                |
 | 주문 완료  | Completed        | 배달이 완료된 이후의 주문 상태            |
 | 배달 요청  | Delivery Request | 배달 대행사에 배달을 요청               |
+| 배달 시작  | Delivery Start   | 배달 기사에게 제공된 주문을 전달한다.        |
 
 ### 포장 주문
 
@@ -195,17 +197,14 @@ docker compose -p kitchenpos up -d
 
 - `Product`는 `Name`을 갖는다.
 - `Product`는 `Price`를 갖는다.
-- `Product` 등록 정책
 - `Name`에 비속어를 사용할 수 없다.
-- `Price`는 0원 이상이어야 한다.
-- `Product` 변경 정책
-- `Price`는 0원 이상이어야 한다.
+- `Product` 등록시 `Price`는 0원 이상이어야 한다.
+- `Product` 변경시 `Price`는 0원 이상이어야 한다.
 - `Price` 변경시 가격이 `Menu`의 가격이 `Menu`에 속한 `Product Price` 의 합보다 크면 `Menu`가 숨겨진다.
 
 ### 메뉴 그룹
 
 - `MenuGroup` 은 `Name`을 갖는다.
-- `MenuGroup` 등록 정책
 - `Name` 은 비울 수 없다.
 
 ### 메뉴
@@ -214,8 +213,8 @@ docker compose -p kitchenpos up -d
 - `Menu` 는 `Name`를 갖는다.
 - `Menu` 는 `MenuGroup` 을 갖는다.
 - `Menu` 는 `Price`를 변경할 수 있다.
-- `Menu` 는 노출할 수 있다.
-- `Menu` 는 비노출 할 수 있다.
+- `Menu` 는 `Display`할 수 있다.
+- `Menu` 는 `Hide` 할 수 있다.
 - `Product` 는 1개 이상이어야 한다.
 - `Product` 의 수량은 0 이상이어야 한다.
 - `Menu` 의 가격은 0원 이상이어야 한다.
@@ -226,8 +225,9 @@ docker compose -p kitchenpos up -d
 - `OrderTable` 은 `Name`을 갖는다.
 - `OrderTable` 은 `Number Of Guests` 의 수를 변경할 수 있고, 0 이상이어야 한다.
 - `OrderTable` 은 손님이 앉으면 찬 테이블이 된다.
-- `OrderTable` 은 주문이 모두 완료되고 손님이 없으면 빈 테이블이 된다.
-- `OrderTable` 에 완료되지 않은 테이블이 있다면 빈 테이블이 될 수 없다.
+- `OrderTable` 은 빈 테이블로 설정할 수 있다.
+    - `OrderTable` 의 주문은 모두 완료되어야 한다.
+    - 손님이 없어야 한다.
 
 ### 주문
 
@@ -247,7 +247,8 @@ docker compose -p kitchenpos up -d
 
 ```mermaid
 flowchart LR
-    deliveryOrder[배달 주문] --> waiting[접수 대기 중] --> accepted[접수] --> served[제공] --> delivering[배달중] --> delivered[배달 완료] --> completed[주문 완료]
+    deliveryOrder[배달 주문] -- 등록한다 --> waiting[접수 대기 중] -- 수락한다 --> accepted[접수] -- 제공한다 --> served[제공] -- 배달시작 --> delivering[배달중] -- 배달을 완료한다 --> delivered[배달 완료] -- 주문을 완료한다 --> completed[주문 완료]
+    accepted -- 배달을 요청한다 --> served
 ```
 
 ### 포장 주문
@@ -256,10 +257,8 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    deliveryOrder[포장 주문] --> waiting[접수 대기 중] --> accepted[접수] --> served[제공] --> completed[주문 완료]
+    togoOrder[포장 주문] -- 등록한다 --> waiting[접수 대기 중] -- 수락한다 --> accepted[접수] -- 제공한다 --> served[제공] -- 완료한다 --> completed[주문 완료]
 ```
-
-
 
 ### 매장 주문
 
@@ -268,5 +267,5 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    eatInOrder[매장 주문] --> waiting[접수 대기 중] --> accepted[접수] --> served[제공] --> completed[주문 완료]
+    eatInOrder[매장 주문] -- 등록한다 --> waiting[접수 대기 중] -- 수락한다 --> accepted[접수] -- 제공한다 --> served[제공] -- 완료한다 --> completed[주문 완료]
 ```
