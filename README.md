@@ -98,11 +98,12 @@ docker compose -p kitchenpos up -d
 
 ### 기타
 
-| 한글명 | 영문명              | 설명                        |
-|-----|------------------|---------------------------|
-| 사장님 | Restaurant Owner | 상품을 파는 사람이다.              |
-| 손님  | Guest            | 상품을 사는 사람이다.              |
-| 매장  | Store            | 키친포스가 설치되고 음식을 사고파는 장소이다. |
+| 한글명        | 영문명              | 설명                                       |
+|------------|------------------|------------------------------------------|
+| 사장님        | Restaurant Owner | 상품을 파는 사람이다.                             |
+| 손님         | Guest            | 상품을 사는 사람이다.                             |
+| 매장         | Store            | 키친포스가 설치되고 음식을 사고파는 장소이다.                |
+| 비속어 검사 시스템 | Profanity Client | Profanity Client 를 통해서 비속어 여부를 판단할 수 있다. |
 
 ### 상품
 
@@ -174,6 +175,7 @@ docker compose -p kitchenpos up -d
 | 배달 완료  | Delivered        | 배달이 완료된 상태이다.                |
 | 주문 완료  | Completed        | 배달이 완료된 이후의 주문 상태            |
 | 배달 요청  | Delivery Request | 배달 대행사에 배달을 요청               |
+| 배달 시작  | Delivery Start   | 배달 기사에게 제공된 주문을 전달한다.        |
 
 ### 포장 주문
 
@@ -190,3 +192,80 @@ docker compose -p kitchenpos up -d
 | 주문 완료 | Completed    | 주문이 제공된 이후의 상태                 |
 
 ## 모델링
+
+### 상품
+
+- `Product`는 `Name`을 갖는다.
+- `Product`는 `Price`를 갖는다.
+- `Name`에 비속어를 사용할 수 없다.
+- `Product` 등록시 `Price`는 0원 이상이어야 한다.
+- `Product` 변경시 `Price`는 0원 이상이어야 한다.
+- `Price` 변경시 가격이 `Menu`의 가격이 `Menu`에 속한 `Product Price` 의 합보다 크면 `Menu`가 숨겨진다.
+
+### 메뉴 그룹
+
+- `MenuGroup` 은 `Name`을 갖는다.
+- `Name` 은 비울 수 없다.
+
+### 메뉴
+
+- `Menu` 는 `Product`를 갖는다.
+- `Menu` 는 `Name`를 갖는다.
+- `Menu` 는 `MenuGroup` 을 갖는다.
+- `Menu` 는 `Price`를 변경할 수 있다.
+- `Menu` 는 `Display`할 수 있다.
+- `Menu` 는 `Hide` 할 수 있다.
+- `Product` 는 1개 이상이어야 한다.
+- `Product` 의 수량은 0 이상이어야 한다.
+- `Menu` 의 가격은 0원 이상이어야 한다.
+- `Name` 에 비속어를 사용할 수 없다.
+
+### 주문 테이블
+
+- `OrderTable` 은 `Name`을 갖는다.
+- `OrderTable` 은 `Number Of Guests` 의 수를 변경할 수 있고, 0 이상이어야 한다.
+- `OrderTable` 은 손님이 앉으면 찬 테이블이 된다.
+- `OrderTable` 은 빈 테이블로 설정할 수 있다.
+    - `OrderTable` 의 주문은 모두 완료되어야 한다.
+    - 손님이 없어야 한다.
+
+### 주문
+
+- `Order` 은 `Delivery,TOGO,Eat In` 3가지 유형을 가진다.
+- `Order` 는 0개 이상의 `Menu`를 갖는다.
+- 주문한 `Menu`의 가격과 실제 `Menu`의 가격은 같아야 한다.
+- `Order`는 접수될 수 있다.
+- `Order`는 서빙될 수 있다.
+- `Order`는 완료될 수 있다.
+
+### 배달 주문
+
+- `Delivery Order` 는 `Delivery Address`를 갖는다.
+- 주문이 접수되면 `Delivery Agency`에 배달을 요청한다.
+- 제공된 주문만 배달할 수 있다.
+- 배달이 완료되면 `Order`는 완료된다.
+
+```mermaid
+flowchart LR
+    deliveryOrder[배달 주문] -- 등록한다 --> waiting[접수 대기 중] -- 수락한다 --> accepted[접수] -- 제공한다 --> served[제공] -- 배달시작 --> delivering[배달중] -- 배달을 완료한다 --> delivered[배달 완료] -- 주문을 완료한다 --> completed[주문 완료]
+    accepted -- 배달을 요청한다 --> served
+```
+
+### 포장 주문
+
+- 제공된 주문만 완료할 수 있다.
+
+```mermaid
+flowchart LR
+    togoOrder[포장 주문] -- 등록한다 --> waiting[접수 대기 중] -- 수락한다 --> accepted[접수] -- 제공한다 --> served[제공] -- 완료한다 --> completed[주문 완료]
+```
+
+### 매장 주문
+
+- 제공된 주문만 완료할 수 있다.
+- 모든 주문이 완료되면 테이블을 빈테이블로 만든다.
+
+```mermaid
+flowchart LR
+    eatInOrder[매장 주문] -- 등록한다 --> waiting[접수 대기 중] -- 수락한다 --> accepted[접수] -- 제공한다 --> served[제공] -- 완료한다 --> completed[주문 완료]
+```
