@@ -1,4 +1,4 @@
-package kitchenpos.external.domain;
+package kitchenpos.external.infra;
 
 import java.math.BigDecimal;
 import java.util.UUID;
